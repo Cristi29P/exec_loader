@@ -1,1 +1,4 @@
 .vscode/settings.json
+checker-lin/_test/outputs/test1.out
+checker-lin/_test/outputs/test1_fault_cnt.out
+checker-lin/results.txt
