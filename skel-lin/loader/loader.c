@@ -21,10 +21,49 @@ static struct sigaction old_signal;
 static int fd;
 static int page_size;
 
-void fault_handler(int signum, siginfo_t *info, void *context) {
-	
+static so_seg_t *get_segment(uintptr_t fault_address)
+{
+	so_seg_t *fault_segment = NULL;
+
+	for (int i = 0; i != exec->segments_no; ++i) {
+		if (fault_address >= (&exec->segments[i])->vaddr &&
+		fault_address < (&exec->segments[i])->vaddr + (&exec->segments[i])->mem_size) {
+			fault_segment = &exec->segments[i];
+			break;
+		}
+	}
+
+	return fault_segment;
+
 }
 
+static void fault_handler(int signum, siginfo_t *info, void *context) {
+	uintptr_t fault_address;
+	so_seg_t *segment;
+
+	/* Find the segment which caused the error. */
+	fault_address = (uintptr_t)info->si_addr;
+	segment = get_segment(fault_address);
+	
+	/* 1. Page not found in any of program's segments, so we have an illegal
+     * memory access.
+	 * OR
+	 * 2. The program tried to perform an illegal operation on a page which
+	 * was already mapped.
+	 */
+	if (!segment || info->si_code == SEGV_ACCERR) {
+		old_signal.sa_sigaction(signum, info, context);
+		return;
+	}
+
+	/* If we reach this point it means that the program tried to access a page
+	 * which has not yet been mapped.
+	 */
+	
+
+
+
+}
 
 int so_init_loader(void)
 {
@@ -50,8 +89,6 @@ int so_init_loader(void)
 	/* Initialization ended successfully */
 	return 0;
 }
-
-
 
 int so_execute(char *path, char *argv[])
 {	
