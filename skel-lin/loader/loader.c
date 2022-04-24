@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -40,6 +41,9 @@ static so_seg_t *get_segment(uintptr_t fault_address)
 static void fault_handler(int signum, siginfo_t *info, void *context) {
 	uintptr_t fault_address;
 	so_seg_t *segment;
+	int page_index;
+	int flags = MAP_PRIVATE | MAP_FIXED;
+	char *aux;
 
 	/* Find the segment which caused the error. */
 	fault_address = (uintptr_t)info->si_addr;
@@ -59,8 +63,15 @@ static void fault_handler(int signum, siginfo_t *info, void *context) {
 	/* If we reach this point it means that the program tried to access a page
 	 * which has not yet been mapped.
 	 */
+	page_index = ((uintptr_t) info->si_addr - segment->vaddr) / page_size;
 	
-
+	
+	aux = mmap((void *) segment->vaddr + page_index * page_size,
+		page_size, segment->perm, flags,
+		fd, segment->offset + page_index * page_size);
+	
+	DIE(aux == MAP_FAILED, "Error mmap.");
+	
 
 
 }
