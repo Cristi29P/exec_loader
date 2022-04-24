@@ -64,15 +64,26 @@ static void fault_handler(int signum, siginfo_t *info, void *context) {
 	 * which has not yet been mapped.
 	 */
 	page_index = ((uintptr_t) info->si_addr - segment->vaddr) / page_size;
-	
+
+	int dif = 0;
+	if (segment->file_size < segment->mem_size) {
+		if (segment->file_size < page_index * page_size) {
+			flags |= MAP_ANONYMOUS;
+		}
+
+		if (segment->file_size < (page_index + 1) * page_size) {
+			dif = (page_index + 1) * page_size - segment->file_size;	
+		}
+	}
 	
 	aux = mmap((void *) segment->vaddr + page_index * page_size,
 		page_size, segment->perm, flags,
 		fd, segment->offset + page_index * page_size);
 	
 	DIE(aux == MAP_FAILED, "Error mmap.");
-	
 
+	if (dif)
+		memset((char *)(segment->vaddr + page_index * page_size + (page_size - dif)),0, dif);
 
 }
 
