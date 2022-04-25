@@ -112,11 +112,11 @@ int so_init_loader(void)
 	signal_action.sa_sigaction = fault_handler;
 
 	ret = sigemptyset(&signal_action.sa_mask);
-	DIE(ret < 0, "Error sigemptyset.");
+	if (ret) exit(-1);
 
 	/* Mask any other SIGSEGV during handler operation */
 	ret = sigaddset(&signal_action.sa_mask, SIGSEGV);
-	DIE(ret < 0, "Error sidaddset.");
+	DIE(ret < 0, "Error sigaddset.");
 
 	/* Associate the new handler for SIGSEGV */
 	ret = sigaction(SIGSEGV, &signal_action, &old_signal);
@@ -130,7 +130,10 @@ int so_execute(char *path, char *argv[])
 {	
 	/* Open the file for mapping */
 	fd = open(path, O_RDONLY, 0644);
-	DIE(fd < 0, "Error fd open.");
+	if (fd < 0) {
+		fprintf(stderr, "Fd error.\n");
+		exit(-1);
+	}
 
 	exec = so_parse_exec(path);
 	if (!exec)
