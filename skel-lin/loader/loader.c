@@ -38,7 +38,8 @@ static so_seg_t *get_segment(uintptr_t fault_address)
 	return fault_segment;
 }
 
-static void fault_handler(int signum, siginfo_t *info, void *context) {
+static void fault_handler(int signum, siginfo_t *info, void *context)
+{
 	uintptr_t fault_address;
 	so_seg_t *segment = NULL;
 	int page_index = 0, dif = 0, flags = MAP_PRIVATE | MAP_FIXED, offset = 0;
@@ -49,19 +50,18 @@ static void fault_handler(int signum, siginfo_t *info, void *context) {
 	/* Find the segment which caused the error. */
 	fault_address = (uintptr_t)info->si_addr;
 	segment = get_segment(fault_address);
-	
-	/* 1. Page not found in any of program's segments, so we have an illegal
-     * memory access.
-	 * OR
-	 * 2. The program tried to perform an illegal operation on a page which
-	 * was already mapped.
+
+	/*
+	 * Page not found in any of program's segments, so we have an illegal
+      memory access or the program tried to perform an illegal operation
+	  on a page which was already mapped.
 	 */
 	if (!segment || info->si_code == SEGV_ACCERR) {
 		old_signal.sa_sigaction(signum, info, context);
 		return;
 	}
-
-	/* If we reach this point it means that the program tried to access a page
+	/*
+	 * If we reach this point it means that the program tried to access a page
 	 * which has not yet been mapped.
 	 */
 
@@ -71,32 +71,31 @@ static void fault_handler(int signum, siginfo_t *info, void *context) {
 	addr = (void *) segment->vaddr + page_chunk; /* Effective address */
 	offset = segment->offset + page_chunk; /* File offset used for mapping */
 
-	/* Corner case */
+	/* Corner cases */
 	if (segment->file_size < segment->mem_size) {
 		/* Case 1: The page is completely outside the file range.
-		 * This means the entire memory between segment->file_size and 
+		 * This means the entire memory between segment->file_size and
 		 * segment->mem_size needs to be zeroed. In order to do this more
 		 * efficiently we use the MAP_ANON flag.
 		 */
-		if (segment->file_size < page_chunk) {
+		if (segment->file_size < page_chunk)
 			flags |= MAP_ANON;
-		}
+
 		/* Case 2: Only a part of the page sits outside the file range.
 		 * We need to zero the rest of the page, so we calculate the remainder.
 		 *
 		 */
-		if (segment->file_size < (page_index + 1) * page_size) {
-			dif = (page_index + 1) * page_size - segment->file_size;	
-		}
+		if (segment->file_size < (page_index + 1) * page_size)
+			dif = (page_index + 1) * page_size - segment->file_size;
 	}
-	
+
 	/* Map the requiered page alongside file data in the address space */
 	aux = mmap(addr, page_size, segment->perm, flags, fd, offset);
 	DIE(aux == MAP_FAILED, "Error mmap.");
 
 	/* Zero the rest of the page which is not backed-up by a file mapping */
 	if (dif)
-		memset((char *)(segment->vaddr + page_index * page_size + (page_size - dif)),0, dif);
+		memset((char *)(segment->vaddr + page_index * page_size + (page_size - dif)), 0, dif);
 }
 
 int so_init_loader(void)
@@ -112,7 +111,8 @@ int so_init_loader(void)
 	signal_action.sa_sigaction = fault_handler;
 
 	ret = sigemptyset(&signal_action.sa_mask);
-	if (ret) exit(-1);
+	if (ret)
+		exit(-1);
 
 	/* Mask any other SIGSEGV during handler operation */
 	ret = sigaddset(&signal_action.sa_mask, SIGSEGV);
@@ -120,14 +120,14 @@ int so_init_loader(void)
 
 	/* Associate the new handler for SIGSEGV */
 	ret = sigaction(SIGSEGV, &signal_action, &old_signal);
-	DIE(ret < 0, "Error sigaction.");	
+	DIE(ret < 0, "Error sigaction.");
 
 	/* Initialization ended successfully */
 	return 0;
 }
 
 int so_execute(char *path, char *argv[])
-{	
+{
 	/* Open the file for mapping */
 	fd = open(path, O_RDONLY, 0644);
 	if (fd < 0) {
