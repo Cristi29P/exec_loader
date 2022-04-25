@@ -97,7 +97,6 @@ static void fault_handler(int signum, siginfo_t *info, void *context) {
 	/* Zero the rest of the page which is not backed-up by a file mapping */
 	if (dif)
 		memset((char *)(segment->vaddr + page_index * page_size + (page_size - dif)),0, dif);
-
 }
 
 int so_init_loader(void)
