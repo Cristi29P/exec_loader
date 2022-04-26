@@ -60,6 +60,7 @@ static void fault_handler(int signum, siginfo_t *info, void *context)
 		old_signal.sa_sigaction(signum, info, context);
 		return;
 	}
+
 	/*
 	 * If we reach this point it means that the program tried to access a page
 	 * which has not yet been mapped.
@@ -67,7 +68,7 @@ static void fault_handler(int signum, siginfo_t *info, void *context)
 
 	/* Retrieve the page index inside the segment where the fault occured */
 	page_index = ((uintptr_t) info->si_addr - segment->vaddr) / page_size;
-	page_chunk = page_index * page_size; /* Where the page starts*/
+	page_chunk = page_index * page_size; /* Where the page starts */
 	addr = (void *) segment->vaddr + page_chunk; /* Effective address */
 	offset = segment->offset + page_chunk; /* File offset used for mapping */
 
@@ -95,7 +96,7 @@ static void fault_handler(int signum, siginfo_t *info, void *context)
 
 	/* Zero the rest of the page which is not backed-up by a file mapping */
 	if (dif)
-		memset((char *)(segment->vaddr + page_index * page_size + (page_size - dif)), 0, dif);
+		memset((char *)(segment->vaddr + page_chunk + (page_size - dif)), 0, dif);
 }
 
 int so_init_loader(void)
