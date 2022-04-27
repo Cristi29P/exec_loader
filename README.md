@@ -24,7 +24,8 @@ the scope of any function.
 ```
 get_segment
 ```
-* Receives a virtual address and returns a pointer to the segment it belongs to or NULL otherwise.
+* Receives a virtual address and returns a pointer to the segment it belongs to
+or NULL otherwise.
 
 ```
 so_init_loader
