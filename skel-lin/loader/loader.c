@@ -66,7 +66,7 @@ static void fault_handler(int signum, siginfo_t *info, void *context)
 	 * which has not yet been mapped.
 	 */
 
-	/* Retrieve the page index inside the segment where the fault occured */
+	/* Retrieve the page index inside the segment where the fault occurred */
 	page_index = ((uintptr_t) info->si_addr - segment->vaddr) / page_size;
 	page_chunk = page_index * page_size; /* Where the page starts */
 	addr = (void *) segment->vaddr + page_chunk; /* Effective address */
@@ -90,7 +90,7 @@ static void fault_handler(int signum, siginfo_t *info, void *context)
 			dif = (page_index + 1) * page_size - segment->file_size;
 	}
 
-	/* Map the requiered page alongside file data in the address space */
+	/* Map the required page alongside file data in the address space */
 	aux = mmap(addr, page_size, segment->perm, flags, fd, offset);
 	DIE(aux == MAP_FAILED, "Error mmap.");
 
