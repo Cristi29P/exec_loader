@@ -17,9 +17,9 @@
 #include "exec_parser.h"
 #include "utils.h"
 
-static so_exec_t *exec;
-static struct sigaction old_signal;
-static int fd;
+static so_exec_t *exec; /* Executable handle */
+static struct sigaction old_signal; /* Default handler */
+static int fd; /* File descriptor */
 static int page_size;
 
 /* Returns a pointer to the segment where the address of the page fault resides */
